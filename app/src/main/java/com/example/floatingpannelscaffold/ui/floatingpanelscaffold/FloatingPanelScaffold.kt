@@ -226,6 +226,7 @@ fun FloatingPanelScaffold(
   bottomPanelGesturesEnabled: Boolean = true,
   sidePanelContent: @Composable ColumnScope.() -> Unit,
   sidePanelModifier: Modifier = Modifier,
+  isSidePanelFullScreen: Boolean = false,
   backgroundColor: Color = MaterialTheme.colors.background,
   contentColor: Color = contentColorFor(backgroundColor),
   content: @Composable (PaddingValues) -> Unit
@@ -280,6 +281,7 @@ fun FloatingPanelScaffold(
           content = { Column(content = sidePanelContent) }
         )
       },
+      isSidePanelFullScreen = isSidePanelFullScreen,
       bottomPanelOffset = scaffoldState.bottomPanelState.offset
     )
   }
@@ -290,6 +292,7 @@ private fun FloatingPanelScaffoldStack(
   body: @Composable () -> Unit,
   bottomPanel: @Composable () -> Unit,
   sidePanel: @Composable () -> Unit,
+  isSidePanelFullScreen: Boolean = false,
   bottomPanelOffset: State<Float>,
 ) {
   Layout(
@@ -305,12 +308,22 @@ private fun FloatingPanelScaffoldStack(
       val (sheetPlaceable, sidePanelPlaceable) = measurables.drop(1).map {
         it.measure(constraints.copy(minWidth = 0, minHeight = 0))
       }
-      sidePanelPlaceable.placeRelative(
-        constraints.maxWidth - sidePanelPlaceable.width,
-        constraints.maxHeight / 2 - sidePanelPlaceable.height / 2
-      )
-      val sheetOffsetY = bottomPanelOffset.value.roundToInt()
-      sheetPlaceable.placeRelative(0, sheetOffsetY)
+      // Condition to draw first sidePanel or bottomPanel in box
+      if (isSidePanelFullScreen) {
+        val sheetOffsetY = bottomPanelOffset.value.roundToInt()
+        sheetPlaceable.placeRelative(0, sheetOffsetY)
+        sidePanelPlaceable.placeRelative(
+          constraints.maxWidth - sidePanelPlaceable.width,
+          constraints.maxHeight / 2 - sidePanelPlaceable.height / 2
+        )
+      } else {
+        sidePanelPlaceable.placeRelative(
+          constraints.maxWidth - sidePanelPlaceable.width,
+          constraints.maxHeight / 2 - sidePanelPlaceable.height / 2
+        )
+        val sheetOffsetY = bottomPanelOffset.value.roundToInt()
+        sheetPlaceable.placeRelative(0, sheetOffsetY)
+      }
     }
   }
 }

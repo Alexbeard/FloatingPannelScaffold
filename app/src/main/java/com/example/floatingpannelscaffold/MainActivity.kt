@@ -22,15 +22,18 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.viewinterop.AndroidView
+import androidx.compose.ui.zIndex
 import com.example.floatingpannelscaffold.ui.*
 import com.example.floatingpannelscaffold.ui.floatingpanelscaffold.*
 import com.example.floatingpannelscaffold.ui.theme.FloatingPannelScaffoldTheme
 import com.google.android.libraries.maps.CameraUpdateFactory
 import com.google.android.libraries.maps.MapView
+import com.google.android.libraries.maps.UiSettings
 import com.google.android.libraries.maps.model.LatLng
 import com.google.maps.android.ktx.addMarker
 import com.google.maps.android.ktx.awaitMap
 import kotlinx.coroutines.launch
+import kotlin.random.Random
 
 class MainActivity : ComponentActivity() {
   @ExperimentalAnimationApi
@@ -54,6 +57,7 @@ fun FloatingPanelScaffoldBody() {
   val coroutineScope = rememberCoroutineScope()
   var sidePanelState by rememberSaveable { mutableStateOf(SidePanelValue.Closed) }
   var sidePanelContent by rememberSaveable { mutableStateOf(SidePanelContent.List) }
+  var isSidePanelFullScreen by rememberSaveable { mutableStateOf(false) }
 
   FloatingPanelScaffold(
     scaffoldState = scaffoldState,
@@ -77,18 +81,18 @@ fun FloatingPanelScaffoldBody() {
         })
     },
     bottomPanelModifier = Modifier
-      .mediaQuery(
-        comparator = Dimensions.Width lessThan 700.dp,
-        modifier = Modifier
-          .fillMaxWidth(0.7f)
-          .padding(top = 16.dp)
-      )
-      .mediaQuery(
-        comparator = Dimensions.Width greaterThan 700.dp,
-        modifier = Modifier
-          .fillMaxWidth(0.4f)
-          .padding(16.dp)
-      ),
+        .mediaQuery(
+            comparator = Dimensions.Width lessThan 700.dp,
+            modifier = Modifier
+                .fillMaxWidth(0.7f)
+                .padding(top = 16.dp)
+        )
+        .mediaQuery(
+            comparator = Dimensions.Width greaterThan 700.dp,
+            modifier = Modifier
+                .fillMaxWidth(0.4f)
+                .padding(16.dp)
+        ),
     bottomPanelShape = RoundedCornerShape(20.dp),
     bottomPanelPeekHeight = 80.dp,
     content = {
@@ -103,41 +107,47 @@ fun FloatingPanelScaffoldBody() {
         Box(modifier = Modifier.animateContentSize()) {
           if (sidePanelContent == SidePanelContent.List) {
             LazyColumn(
-              Modifier
-                .width(70.dp)
-                .fillMaxHeight(0.5f)
+                Modifier
+                    .width(70.dp)
+                    .fillMaxHeight(0.5f)
             ) {
-              items(30) {
+              items(30) { index ->
                 Box(modifier = Modifier.fillMaxWidth()) {
                   Image(
                     imageVector = Icons.Filled.AddCircle,
                     contentDescription = "add",
                     modifier = Modifier
-                      .size(40.dp)
-                      .align(Alignment.Center)
-                      .clickable {
-                        sidePanelContent = SidePanelContent.Image
-                      }
+                        .size(40.dp)
+                        .align(Alignment.Center)
+                        .clickable {
+                            isSidePanelFullScreen = index % 2 == 0
+                            sidePanelContent = SidePanelContent.Image
+                        }
                   )
                 }
               }
             }
           } else {
+            val modifier = if (isSidePanelFullScreen) {
+              Modifier.fillMaxSize()
+            } else {
+              Modifier.size(250.dp, 250.dp)
+            }
             Image(
               imageVector = Icons.Filled.ShoppingCart,
               contentDescription = "",
-              Modifier
-                .size(250.dp, 250.dp)
-                .align(alignment = Alignment.Center)
-                .clickable {
-                  sidePanelContent = SidePanelContent.List
-                }
+                modifier
+                    .align(alignment = Alignment.Center)
+                    .clickable {
+                        sidePanelContent = SidePanelContent.List
+                    }
             )
           }
         }
       }
     },
-    sidePanelModifier = Modifier
+    sidePanelModifier = Modifier,
+    isSidePanelFullScreen = isSidePanelFullScreen
   )
 }
 
@@ -162,8 +172,8 @@ fun BottomPannelContent(
         Text(
           text = "I am in bottom pannel",
           modifier = Modifier
-            .height(height = 40.dp)
-            .padding(horizontal = 16.dp)
+              .height(height = 40.dp)
+              .padding(horizontal = 16.dp)
         )
       }
     }
@@ -197,38 +207,24 @@ private fun MapViewContainer(
   var zoom by rememberSaveable(map) { mutableStateOf(InitialZoom) }
   Box {
     AndroidView({ map }) { mapView ->
-      // Reading zoom so that AndroidView recomposes when it changes. The getMapAsync lambda
-      // is stored for later, Compose doesn't recognize state reads
-      val mapZoom = zoom
       coroutineScope.launch {
         val googleMap = mapView.awaitMap()
-        googleMap.setZoom(mapZoom)
+        googleMap.uiSettings.isZoomGesturesEnabled = true
+        googleMap.uiSettings.isTiltGesturesEnabled = true
+        googleMap.uiSettings.isRotateGesturesEnabled = true
         // Move camera to the same place to trigger the zoom update
         googleMap.moveCamera(CameraUpdateFactory.newLatLng(cameraPosition))
       }
     }
-    ZoomControls(zoom) {
-      zoom = it.coerceIn(MinZoom, MaxZoom)
-    }
-  }
-}
-
-
-@Composable
-private fun ZoomControls(
-  zoom: Float,
-  onZoomChanged: (Float) -> Unit
-) {
-  Column(Modifier) {
-    ZoomButton(Icons.Filled.ArrowBack, onClick = { onZoomChanged(zoom * 0.8f) })
-    ZoomButton(Icons.Filled.Add, onClick = { onZoomChanged(zoom * 1.2f) })
   }
 }
 
 @Composable
-private fun ZoomButton(imageVector: ImageVector, onClick: () -> Unit) {
+private fun MapControlButton(imageVector: ImageVector, onClick: () -> Unit) {
   FloatingActionButton(
-    modifier = Modifier.size(56.dp).padding(8.dp),
+    modifier = Modifier
+        .size(56.dp)
+        .padding(8.dp),
     backgroundColor = MaterialTheme.colors.onPrimary,
     contentColor = MaterialTheme.colors.primary,
     onClick = onClick
