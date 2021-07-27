@@ -1,12 +1,14 @@
 package com.example.floatingpannelscaffold.ui.floatingpanelscaffold
 
-import androidx.compose.animation.animateContentSize
+import androidx.compose.animation.*
 import androidx.compose.animation.core.AnimationSpec
-import androidx.compose.animation.core.TweenSpec
 import androidx.compose.foundation.gestures.Orientation
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.*
+import androidx.compose.material.ExperimentalMaterialApi
+import androidx.compose.material.MaterialTheme
+import androidx.compose.material.Surface
+import androidx.compose.material.contentColorFor
 import androidx.compose.runtime.*
 import androidx.compose.runtime.saveable.Saver
 import androidx.compose.runtime.saveable.rememberSaveable
@@ -19,7 +21,7 @@ import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
-import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.launch
 import kotlin.math.max
 import kotlin.math.roundToInt
 
@@ -33,74 +35,6 @@ enum class SidePanelValue {
   Closed,
   Open,
 }
-
-
-@Suppress("NotCloseable")
-@OptIn(ExperimentalMaterialApi::class)
-@Stable
-class SidePanelState(
-  initialValue: SidePanelValue,
-  confirmStateChange: (SidePanelValue) -> Boolean = { true }
-) {
-
-  val swipeableState = SwipeableState(
-    initialValue = initialValue,
-    animationSpec = AnimationSpec,
-    confirmStateChange = confirmStateChange
-  )
-
-  val isOpen: Boolean
-    get() = currentValue == SidePanelValue.Open
-
-  val isClosed: Boolean
-    get() = currentValue == SidePanelValue.Closed
-
-  val currentValue: SidePanelValue
-    get() {
-      return swipeableState.currentValue
-    }
-
-  val isAnimationRunning: Boolean
-    get() {
-      return swipeableState.isAnimationRunning
-    }
-
-  suspend fun open() = animateTo(SidePanelValue.Open, AnimationSpec)
-
-  suspend fun close() = animateTo(SidePanelValue.Closed, AnimationSpec)
-
-  @ExperimentalMaterialApi
-  suspend fun animateTo(targetValue: SidePanelValue, anim: AnimationSpec<Float>) {
-    swipeableState.animateTo(targetValue, anim)
-  }
-
-
-  @ExperimentalMaterialApi
-  suspend fun snapTo(targetValue: SidePanelValue) {
-    swipeableState.snapTo(targetValue)
-  }
-
-  @ExperimentalMaterialApi
-  @get:ExperimentalMaterialApi
-  val targetValue: SidePanelValue
-    get() = swipeableState.targetValue
-
-
-  @ExperimentalMaterialApi
-  @get:ExperimentalMaterialApi
-  val offset: State<Float>
-    get() = swipeableState.offset
-
-  companion object {
-
-    fun Saver(confirmStateChange: (SidePanelValue) -> Boolean) =
-      Saver<SidePanelState, SidePanelValue>(
-        save = { it.currentValue },
-        restore = { SidePanelState(it, confirmStateChange) }
-      )
-  }
-}
-
 
 @ExperimentalMaterialApi
 class BottomPanelState(
@@ -116,8 +50,7 @@ class BottomPanelState(
   val isCollapsed: Boolean
     get() = currentValue == BottomPanelValue.Collapsed
 
-
-  internal val isHalfExpandedEnabled: Boolean
+  val isHalfExpandedEnabled: Boolean
     get() = anchors.values.contains(BottomPanelValue.HalfExpanded)
 
   suspend fun show() {
@@ -178,20 +111,6 @@ fun rememberBottomPanelState(
   }
 }
 
-
-@Composable
-fun rememberSidePanelState(
-  initialValue: SidePanelValue,
-  confirmStateChange: (SidePanelValue) -> Boolean = { true }
-): SidePanelState {
-  return rememberSaveable(saver = SidePanelState.Saver(confirmStateChange)) {
-    SidePanelState(
-      initialValue = initialValue,
-      confirmStateChange = confirmStateChange
-    )
-  }
-}
-
 @ExperimentalMaterialApi
 @Stable
 class FloatingPanelScaffoldState(
@@ -211,14 +130,17 @@ fun rememberFloatingPanelScaffoldState(
 }
 
 
+@ExperimentalAnimationApi
 @Composable
 @ExperimentalMaterialApi
 fun FloatingPanelScaffold(
   modifier: Modifier = Modifier,
   scaffoldState: FloatingPanelScaffoldState = rememberFloatingPanelScaffoldState(),
+  sidePanelState: SidePanelValue = SidePanelValue.Closed,
+  isInListMode: State<Boolean>,
   bottomPanelContent: @Composable ColumnScope.() -> Unit,
   bottomPanelModifier: Modifier = Modifier,
-  bottomPanelShape: Shape = MaterialTheme.shapes.large,
+  bottomPanelShape: Shape = RoundedCornerShape(15.dp),
   bottomPanelElevation: Dp = BottomPanelScaffoldDefaults.SheetElevation,
   bottomPanelBackgroundColor: Color = MaterialTheme.colors.surface,
   bottomPanelContentColor: Color = contentColorFor(bottomPanelBackgroundColor),
@@ -226,24 +148,38 @@ fun FloatingPanelScaffold(
   bottomPanelGesturesEnabled: Boolean = true,
   sidePanelContent: @Composable ColumnScope.() -> Unit,
   sidePanelModifier: Modifier = Modifier,
-  isSidePanelFullScreen: Boolean = false,
   backgroundColor: Color = MaterialTheme.colors.background,
   contentColor: Color = contentColorFor(backgroundColor),
   content: @Composable (PaddingValues) -> Unit
 ) {
   BoxWithConstraints(modifier) {
+    val coroutineScope = rememberCoroutineScope()
     val fullHeight = constraints.maxHeight.toFloat()
     val peekHeightPx = with(LocalDensity.current) { bottomPanelPeekHeight.toPx() }
     val bottomSheetHeight = remember { mutableStateOf(fullHeight) }
 
+    LaunchedEffect(isInListMode.value) {
+      coroutineScope.launch {
+        if (isInListMode.value) {
+          scaffoldState.bottomPanelState.expand()
+        } else {
+          scaffoldState.bottomPanelState.hide()
+        }
+      }
+    }
+
     val swipeable = Modifier
-      .nestedScroll(scaffoldState.bottomPanelState.nestedScrollConnection)
+      .then(
+        if (!isInListMode.value)
+          Modifier.nestedScroll(scaffoldState.bottomPanelState.nestedScrollConnection)
+        else Modifier
+      )
       .bottomPanelSwipeable(
         scaffoldState.bottomPanelState,
         fullHeight,
         peekHeightPx,
         bottomSheetHeight,
-        bottomPanelGesturesEnabled
+        if (isInListMode.value) false else bottomPanelGesturesEnabled
       )
       .onGloballyPositioned {
         bottomSheetHeight.value = it.size.height.toFloat()
@@ -263,7 +199,8 @@ fun FloatingPanelScaffold(
       bottomPanel = {
         Surface(
           swipeable
-            .requiredHeightIn(min = bottomPanelPeekHeight) then bottomPanelModifier,
+            .requiredHeightIn(min = bottomPanelPeekHeight)
+            .then(bottomPanelModifier),
           shape = bottomPanelShape,
           elevation = bottomPanelElevation,
           color = bottomPanelBackgroundColor,
@@ -273,15 +210,28 @@ fun FloatingPanelScaffold(
       },
       sidePanel = {
         Surface(
-          modifier = sidePanelModifier,
-          shape = RoundedCornerShape(topStart = 10.dp, bottomStart = 10.dp),
+          modifier = sidePanelModifier.then(
+            if (isInListMode.value) Modifier.fillMaxHeight()
+            else Modifier
+          ),
+          shape = RoundedCornerShape(topStart = 15.dp, bottomStart = 15.dp),
           elevation = bottomPanelElevation,
           color = bottomPanelBackgroundColor,
           contentColor = bottomPanelContentColor,
-          content = { Column(content = sidePanelContent) }
+          content = {
+            Column {
+              AnimatedVisibility(
+                visible = sidePanelState == SidePanelValue.Open,
+                enter = fadeIn() + expandHorizontally(),
+                exit = fadeOut() + shrinkHorizontally()
+              ) {
+                sidePanelContent()
+              }
+            }
+          }
         )
       },
-      isSidePanelFullScreen = isSidePanelFullScreen,
+      isInListMode = isInListMode.value,
       bottomPanelOffset = scaffoldState.bottomPanelState.offset
     )
   }
@@ -292,24 +242,34 @@ private fun FloatingPanelScaffoldStack(
   body: @Composable () -> Unit,
   bottomPanel: @Composable () -> Unit,
   sidePanel: @Composable () -> Unit,
-  isSidePanelFullScreen: Boolean = false,
+  isInListMode: Boolean,
   bottomPanelOffset: State<Float>,
 ) {
   Layout(
     content = {
       body()
-      bottomPanel()
       sidePanel()
+      bottomPanel()
     }
   ) { measurables, constraints ->
     val placeable = measurables.first().measure(constraints)
     layout(placeable.width, placeable.height) {
       placeable.placeRelative(0, 0)
-      val (sheetPlaceable, sidePanelPlaceable) = measurables.drop(1).map {
-        it.measure(constraints.copy(minWidth = 0, minHeight = 0))
+      val sidePanelPlaceable = measurables[1].measure(constraints.copy(minWidth = 0, minHeight = 0))
+      val sheetPlaceable = measurables[2].let {
+        if (isInListMode) {
+          it.measure(
+            constraints.copy(
+              maxWidth = constraints.maxWidth - sidePanelPlaceable.width,
+              minHeight = 0
+            )
+          )
+        } else {
+          it.measure(constraints.copy(minWidth = 0, minHeight = 0))
+        }
       }
-      // Condition to draw first sidePanel or bottomPanel in box
-      if (isSidePanelFullScreen) {
+      // Condition to draw first either sidePanel or bottomPanel in box
+      if (isInListMode) {
         val sheetOffsetY = bottomPanelOffset.value.roundToInt()
         sheetPlaceable.placeRelative(0, sheetOffsetY)
         sidePanelPlaceable.placeRelative(
@@ -369,7 +329,3 @@ object BottomPanelScaffoldDefaults {
   val SheetElevation = 8.dp
   val SheetPeekHeight = 56.dp
 }
-
-private val AnimationSpec = TweenSpec<Float>(durationMillis = 256)
-
-
