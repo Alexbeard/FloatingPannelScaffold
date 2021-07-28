@@ -16,15 +16,44 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import cafe.adriel.voyager.core.screen.Screen
+import cafe.adriel.voyager.navigator.LocalNavigator
+import cafe.adriel.voyager.navigator.currentOrThrow
 
 
-enum class SidePanelContent {
-  List, Image, Empty
+sealed class SidePanelScreens : Screen {
+
+  object SidePanelListScreen : SidePanelScreens() {
+
+    @Composable
+    override fun Content() {
+      val navigator = LocalNavigator.currentOrThrow
+      SidePanelList { navigator.push(SidePanelImageScreen) }
+    }
+  }
+
+  object SidePanelImageScreen : SidePanelScreens() {
+
+    @Composable
+    override fun Content() {
+      val navigator = LocalNavigator.currentOrThrow
+      SidePanelImage { navigator.pop() }
+    }
+  }
+
+  object SidePanelEmptyScreen : SidePanelScreens() {
+
+    @Composable
+    override fun Content() {
+      val navigator = LocalNavigator.currentOrThrow
+      SidePanelEmpty { navigator.push(SidePanelListScreen) }
+    }
+  }
 }
 
 @Composable
-fun SidePanelList(modifier: Modifier = Modifier, onClick: () -> Unit) {
-  LazyColumn(modifier) {
+fun SidePanelList(onClick: () -> Unit) {
+  LazyColumn {
     items(30) { index ->
       Box(modifier = Modifier.fillMaxWidth()) {
         Image(
@@ -41,18 +70,19 @@ fun SidePanelList(modifier: Modifier = Modifier, onClick: () -> Unit) {
 }
 
 @Composable
-fun SidePanelImage(modifier: Modifier = Modifier, onClick: () -> Unit) {
+fun SidePanelImage(onClick: () -> Unit) {
   Image(
     imageVector = Icons.Filled.ShoppingCart,
     contentDescription = "",
-    modifier
+    Modifier
+      .fillMaxSize()
       .clickable(onClick = onClick)
   )
 }
 
 @Composable
-fun SidePanelEmpty(modifier: Modifier = Modifier, onClick: () -> Unit) {
-  Box(modifier.clickable(onClick = onClick)) {
+fun SidePanelEmpty(onClick: () -> Unit) {
+  Box(Modifier.clickable(onClick = onClick).fillMaxSize()) {
     Text(
       text = "Empty Side Panel",
       Modifier
@@ -72,14 +102,14 @@ private fun SidePanelListPreview() {
       .background(Color.White),
     contentAlignment = Alignment.Center
   ) {
-    SidePanelList(SidePanelScreenConstraintsModifiers.CollapsedModifier(true)) {}
+    SidePanelList() {}
   }
 }
 
 @Preview
 @Composable
 private fun SidePanelImagePreview() {
-  SidePanelImage(SidePanelScreenConstraintsModifiers.ExpandedModifier(false)) {}
+  SidePanelImage {}
 }
 
 @Preview
@@ -91,7 +121,21 @@ private fun SidePanelEmptyPreview() {
       .background(Color.White),
     contentAlignment = Alignment.Center
   ) {
-    SidePanelEmpty(SidePanelScreenConstraintsModifiers.CollapsedModifier(true)) {}
+    SidePanelEmpty {}
+  }
+}
+
+fun SidePanelScreens.modifier(isInListMode: Boolean): Modifier {
+  return when (this) {
+    is SidePanelScreens.SidePanelEmptyScreen -> {
+      SidePanelScreenConstraintsModifiers.CollapsedModifier(isInListMode = isInListMode)
+    }
+    is SidePanelScreens.SidePanelListScreen -> {
+      SidePanelScreenConstraintsModifiers.CollapsedModifier(isInListMode = isInListMode)
+    }
+    is SidePanelScreens.SidePanelImageScreen -> {
+      SidePanelScreenConstraintsModifiers.ExpandedModifier(isInListMode = isInListMode)
+    }
   }
 }
 

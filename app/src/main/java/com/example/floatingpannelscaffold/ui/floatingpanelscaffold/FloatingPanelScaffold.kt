@@ -33,7 +33,11 @@ enum class BottomPanelValue {
 
 enum class SidePanelValue {
   Closed,
-  Open,
+  Open;
+
+  operator fun not(): SidePanelValue {
+    return if (this == Closed) Open else Closed
+  }
 }
 
 @ExperimentalMaterialApi
