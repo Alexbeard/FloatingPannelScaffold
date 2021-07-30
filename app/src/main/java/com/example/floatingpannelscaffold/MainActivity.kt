@@ -42,62 +42,63 @@ fun FloatingPanelScaffoldBody() {
   val scaffoldState = rememberFloatingPanelScaffoldState()
   val isInListMode = rememberSaveable { mutableStateOf(false) }
   var sidePanelState by rememberSaveable { mutableStateOf(SidePanelValue.Closed) }
+  var sidePanelScreen: SidePanelScreens by rememberSaveable { mutableStateOf(SidePanelScreens.SidePanelEmptyScreen) }
 
-  Navigator(SidePanelScreens.SidePanelEmptyScreen) { sidePanelNavigator ->
-    if (isInListMode.value) {
-      sidePanelState = SidePanelValue.Open
-    } else if (sidePanelNavigator.last is SidePanelScreens.SidePanelEmptyScreen) {
-      sidePanelState = SidePanelValue.Closed
-    }
+  if (isInListMode.value) {
+    sidePanelState = SidePanelValue.Open
+  } else if (sidePanelScreen is SidePanelScreens.SidePanelEmptyScreen) {
+    sidePanelState = SidePanelValue.Closed
+  }
 
-    FloatingPanelScaffold(
-      scaffoldState = scaffoldState,
-      sidePanelState = sidePanelState,
-      isInListMode = isInListMode,
-      modifier = Modifier.fillMaxSize(),
-      bottomPanelContent = {
-        Navigator(BottomPanelScreens.BottomPanelMainScreen(
-          onExpandBottomClicked = {
-            coroutineScope.launch {
-              if (scaffoldState.bottomPanelState.isCollapsed) {
-                scaffoldState.bottomPanelState.expand()
-              } else {
-                scaffoldState.bottomPanelState.hide()
-              }
+  FloatingPanelScaffold(
+    scaffoldState = scaffoldState,
+    sidePanelState = sidePanelState,
+    isInListMode = isInListMode,
+    modifier = Modifier.fillMaxSize(),
+    bottomPanelContent = {
+      Navigator(BottomPanelScreens.BottomPanelMainScreen(
+        onExpandBottomClicked = {
+          coroutineScope.launch {
+            if (scaffoldState.bottomPanelState.isCollapsed) {
+              scaffoldState.bottomPanelState.expand()
+            } else {
+              scaffoldState.bottomPanelState.hide()
             }
-          },
-          onExpandSideClicked = {
-            sidePanelState = !sidePanelState
-          },
-          onListModeClicked = {
-            isInListMode.value = !isInListMode.value
           }
-        )) { bottomPanelNavigator ->
-          Crossfade(targetState = bottomPanelNavigator.last) { screen ->
-            screen.Content()
-          }
+        },
+        onExpandSideClicked = {
+          sidePanelState = !sidePanelState
+        },
+        onListModeClicked = {
+          isInListMode.value = !isInListMode.value
         }
-      },
-      bottomPanelModifier = Modifier
-        .mediaQuery(
-          comparator = Dimensions.Width lessThan 700.dp,
-          modifier = Modifier
-            .fillMaxWidth()
-            .padding(top = 16.dp)
-        )
-        .mediaQuery(
-          comparator = Dimensions.Width greaterThan 700.dp,
-          modifier = Modifier
-            .fillMaxWidth(0.4f)
-            .padding(16.dp)
-        ) then if (isInListMode.value) Modifier.padding(end = 2.dp) else Modifier,
-      bottomPanelShape = RoundedCornerShape(20.dp),
-      bottomPanelPeekHeight = 80.dp,
-      content = {
-        CityMapView(latitude = "43.000000", longitude = "-75.000000")
-      },
-      sidePanelContent = {
-        val sidePanelScreen = sidePanelNavigator.last as SidePanelScreens
+      )) { bottomPanelNavigator ->
+        Crossfade(targetState = bottomPanelNavigator.last) { screen ->
+          screen.Content()
+        }
+      }
+    },
+    bottomPanelModifier = Modifier
+      .mediaQuery(
+        comparator = Dimensions.Width lessThan 700.dp,
+        modifier = Modifier
+          .fillMaxWidth()
+          .padding(top = 16.dp)
+      )
+      .mediaQuery(
+        comparator = Dimensions.Width greaterThan 700.dp,
+        modifier = Modifier
+          .fillMaxWidth(0.4f)
+          .padding(16.dp)
+      ) then if (isInListMode.value) Modifier.padding(end = 2.dp) else Modifier,
+    bottomPanelShape = RoundedCornerShape(20.dp),
+    bottomPanelPeekHeight = 80.dp,
+    content = {
+      CityMapView(latitude = "43.000000", longitude = "-75.000000")
+    },
+    sidePanelContent = {
+      Navigator(sidePanelScreen) { sidePanelNavigator ->
+        sidePanelScreen = sidePanelNavigator.last as SidePanelScreens
         Box(
           modifier = sidePanelScreen
             .modifier(isInListMode.value)
@@ -105,10 +106,11 @@ fun FloatingPanelScaffoldBody() {
         ) {
           sidePanelScreen.Content()
         }
-      },
-      sidePanelModifier = if (isInListMode.value) Modifier.padding(top = 16.dp) else Modifier,
-    )
-  }
+      }
+    },
+    sidePanelModifier = if (isInListMode.value) Modifier.padding(top = 16.dp) else Modifier,
+  )
 }
+
 
 
