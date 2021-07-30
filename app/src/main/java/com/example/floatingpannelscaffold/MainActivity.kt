@@ -97,7 +97,7 @@ fun FloatingPanelScaffoldBody() {
       CityMapView(latitude = "43.000000", longitude = "-75.000000")
     },
     sidePanelContent = {
-      Navigator(SidePanelScreens.SidePanelEmptyScreen) { sidePanelNavigator ->
+      Navigator(sidePanelScreen) { sidePanelNavigator ->
         sidePanelScreen = sidePanelNavigator.last as SidePanelScreens
         Box(
           modifier = sidePanelScreen
