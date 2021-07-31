@@ -5,20 +5,29 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.material.MaterialTheme
 import androidx.compose.material.Text
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.AddCircle
+import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.ShoppingCart
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.ColorFilter
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import cafe.adriel.voyager.core.screen.Screen
 import cafe.adriel.voyager.navigator.LocalNavigator
 import cafe.adriel.voyager.navigator.currentOrThrow
+import com.example.floatingpannelscaffold.ui.models.DefaultStatuses
+import com.example.floatingpannelscaffold.ui.models.Status
 
 
 sealed class SidePanelScreens : Screen {
@@ -28,16 +37,18 @@ sealed class SidePanelScreens : Screen {
     @Composable
     override fun Content() {
       val navigator = LocalNavigator.currentOrThrow
-      SidePanelList { navigator.push(SidePanelImageScreen) }
+      SidePanelList(DefaultStatuses) {
+        navigator.push(SidePanelImageScreen(it))
+      }
     }
   }
 
-  object SidePanelImageScreen : SidePanelScreens() {
+  data class SidePanelImageScreen(val icon: ImageVector) : SidePanelScreens() {
 
     @Composable
     override fun Content() {
       val navigator = LocalNavigator.currentOrThrow
-      SidePanelImage { navigator.pop() }
+      SidePanelImage(icon) { navigator.pop() }
     }
   }
 
@@ -52,29 +63,58 @@ sealed class SidePanelScreens : Screen {
 }
 
 @Composable
-fun SidePanelList(onClick: () -> Unit) {
+fun SidePanelList(items: List<Status>, onClick: (ImageVector) -> Unit) {
   LazyColumn {
-    items(30) { index ->
-      Box(modifier = Modifier.fillMaxWidth()) {
-        Image(
-          imageVector = Icons.Filled.AddCircle,
-          contentDescription = "add",
-          modifier = Modifier
-            .size(40.dp)
-            .align(Alignment.Center)
-            .clickable(onClick = onClick)
-        )
-      }
+    items(items) {
+      Spacer(modifier = Modifier.height(16.dp))
+      StatusAction(
+        icon = it.icon,
+        backgroundColor = it.backgroundColor,
+        status = it.statusText,
+        onClick = onClick
+      )
     }
   }
 }
 
 @Composable
-fun SidePanelImage(onClick: () -> Unit) {
+fun StatusAction(
+  icon: ImageVector,
+  backgroundColor: Color,
+  status: String,
+  onClick: (ImageVector) -> Unit
+) {
+  Column(modifier = Modifier.fillMaxWidth(), horizontalAlignment = Alignment.CenterHorizontally) {
+    Box(
+      modifier = Modifier
+        .size(35.dp)
+        .clip(CircleShape)
+        .background(backgroundColor)
+        .clickable {
+          onClick(icon)
+        },
+      contentAlignment = Alignment.Center
+    ) {
+      Image(
+        imageVector = icon,
+        contentDescription = "status",
+        colorFilter = ColorFilter.tint(Color.White),
+        modifier = Modifier
+          .fillMaxSize()
+          .padding(8.dp)
+      )
+    }
+    Text(text = status, fontSize = 14.sp, textAlign = TextAlign.Center)
+  }
+}
+
+@Composable
+fun SidePanelImage(icon: ImageVector, onClick: () -> Unit) {
   Image(
-    imageVector = Icons.Filled.ShoppingCart,
+    imageVector = icon,
     contentDescription = "",
-    Modifier
+    colorFilter = ColorFilter.tint(color = MaterialTheme.colors.onSurface),
+    modifier = Modifier
       .fillMaxSize()
       .clickable(onClick = onClick)
   )
@@ -82,7 +122,11 @@ fun SidePanelImage(onClick: () -> Unit) {
 
 @Composable
 fun SidePanelEmpty(onClick: () -> Unit) {
-  Box(Modifier.clickable(onClick = onClick).fillMaxSize()) {
+  Box(
+    Modifier
+      .clickable(onClick = onClick)
+      .fillMaxSize()
+  ) {
     Text(
       text = "Empty Side Panel",
       Modifier
@@ -99,17 +143,27 @@ private fun SidePanelListPreview() {
   Box(
     modifier = Modifier
       .size(100.dp, 300.dp)
-      .background(Color.White),
-    contentAlignment = Alignment.Center
+      .background(Color.White)
   ) {
-    SidePanelList() {}
+    SidePanelList(DefaultStatuses) {}
   }
 }
 
 @Preview
 @Composable
+fun StatusPreview() {
+  StatusAction(
+    icon = Icons.Filled.Add,
+    backgroundColor = Color.Black,
+    status = "Status",
+    onClick = { }
+  )
+}
+
+@Preview
+@Composable
 private fun SidePanelImagePreview() {
-  SidePanelImage {}
+  SidePanelImage(Icons.Filled.ShoppingCart) {}
 }
 
 @Preview
