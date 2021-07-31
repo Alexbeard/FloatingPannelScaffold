@@ -142,16 +142,20 @@ fun FloatingPanelScaffold(
   scaffoldState: FloatingPanelScaffoldState = rememberFloatingPanelScaffoldState(),
   sidePanelState: SidePanelValue = SidePanelValue.Closed,
   isInListMode: State<Boolean>,
-  bottomPanelContent: @Composable ColumnScope.() -> Unit,
   bottomPanelModifier: Modifier = Modifier,
   bottomPanelShape: Shape = RoundedCornerShape(15.dp),
-  bottomPanelElevation: Dp = BottomPanelScaffoldDefaults.SheetElevation,
+  bottomPanelElevation: Dp = FloatingPanelScaffoldDefaults.Elevation,
   bottomPanelBackgroundColor: Color = MaterialTheme.colors.surface,
   bottomPanelContentColor: Color = contentColorFor(bottomPanelBackgroundColor),
-  bottomPanelPeekHeight: Dp = BottomPanelScaffoldDefaults.SheetPeekHeight,
+  bottomPanelPeekHeight: Dp = FloatingPanelScaffoldDefaults.SheetPeekHeight,
   bottomPanelGesturesEnabled: Boolean = true,
-  sidePanelContent: @Composable ColumnScope.() -> Unit,
+  bottomPanelContent: @Composable ColumnScope.() -> Unit,
   sidePanelModifier: Modifier = Modifier,
+  sidePanelShape: Shape = RoundedCornerShape(topStart = 15.dp, bottomStart = 15.dp),
+  sidePanelElevation: Dp = FloatingPanelScaffoldDefaults.Elevation,
+  sidePanelBackgroundColor: Color = MaterialTheme.colors.surface,
+  sidePanelContentColor: Color = contentColorFor(sidePanelBackgroundColor),
+  sidePanelContent: @Composable ColumnScope.() -> Unit,
   backgroundColor: Color = MaterialTheme.colors.background,
   contentColor: Color = contentColorFor(backgroundColor),
   content: @Composable (PaddingValues) -> Unit
@@ -217,10 +221,10 @@ fun FloatingPanelScaffold(
             if (isInListMode.value) Modifier.fillMaxHeight()
             else Modifier
           ),
-          shape = RoundedCornerShape(topStart = 15.dp, bottomStart = 15.dp),
-          elevation = bottomPanelElevation,
-          color = bottomPanelBackgroundColor,
-          contentColor = bottomPanelContentColor,
+          shape = sidePanelShape,
+          elevation = sidePanelElevation,
+          color = sidePanelBackgroundColor,
+          contentColor = sidePanelContentColor,
           content = {
             Column {
               AnimatedVisibility(
@@ -328,7 +332,7 @@ private fun Modifier.bottomPanelSwipeable(
   return this.then(modifier)
 }
 
-object BottomPanelScaffoldDefaults {
-  val SheetElevation = 8.dp
+object FloatingPanelScaffoldDefaults {
+  val Elevation = 8.dp
   val SheetPeekHeight = 56.dp
 }
