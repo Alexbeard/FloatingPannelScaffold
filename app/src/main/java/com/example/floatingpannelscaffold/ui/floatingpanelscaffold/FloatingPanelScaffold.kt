@@ -157,13 +157,12 @@ fun FloatingPanelScaffold(
   content: @Composable (PaddingValues) -> Unit
 ) {
   BoxWithConstraints(modifier) {
-    val coroutineScope = rememberCoroutineScope()
     val fullHeight = constraints.maxHeight.toFloat()
     val peekHeightPx = with(LocalDensity.current) { bottomPanelPeekHeight.toPx() }
     val bottomSheetHeight = remember { mutableStateOf(fullHeight) }
 
     LaunchedEffect(isInListMode.value) {
-      coroutineScope.launch {
+      launch {
         if (isInListMode.value) {
           scaffoldState.bottomPanelState.expand()
         } else {

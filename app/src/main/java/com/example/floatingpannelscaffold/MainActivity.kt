@@ -6,7 +6,10 @@ import androidx.activity.compose.setContent
 import androidx.compose.animation.Crossfade
 import androidx.compose.animation.ExperimentalAnimationApi
 import androidx.compose.animation.animateContentSize
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.ExperimentalMaterialApi
 import androidx.compose.runtime.*
@@ -16,7 +19,10 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import cafe.adriel.voyager.navigator.Navigator
 import com.example.floatingpannelscaffold.ui.floatingpanelscaffold.*
-import com.example.floatingpannelscaffold.ui.screens.*
+import com.example.floatingpannelscaffold.ui.screens.BottomPanelScreens
+import com.example.floatingpannelscaffold.ui.screens.CityMapView
+import com.example.floatingpannelscaffold.ui.screens.SidePanelScreens
+import com.example.floatingpannelscaffold.ui.screens.modifier
 import com.example.floatingpannelscaffold.ui.theme.FloatingPannelScaffoldTheme
 import kotlinx.coroutines.launch
 
