@@ -7,12 +7,14 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.itemsIndexed
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.*
 import androidx.compose.runtime.*
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.material.icons.filled.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.saveable.rememberSaveable
@@ -27,6 +29,7 @@ import androidx.compose.ui.unit.sp
 import cafe.adriel.voyager.core.screen.Screen
 import cafe.adriel.voyager.navigator.LocalNavigator
 import cafe.adriel.voyager.navigator.currentOrThrow
+import com.example.floatingpannelscaffold.ui.components.ImagePicker
 import com.example.floatingpannelscaffold.ui.components.SelectableChip
 import com.example.floatingpannelscaffold.ui.models.DefaultUsers
 import com.example.floatingpannelscaffold.ui.models.User
@@ -137,13 +140,18 @@ fun UserCell(user: User, onClick: (User) -> Unit) {
 @Composable
 fun BottomPanelUserContent(user: User) {
   val navigator = LocalNavigator.currentOrThrow
+  val scrollState = rememberScrollState()
   Column(modifier = Modifier.fillMaxWidth()) {
     Spacer(modifier = Modifier.height(16.dp))
     IconButton(onClick = { navigator.pop() }) {
       Icon(imageVector = Icons.Default.ArrowBack, contentDescription = "Back Arrow")
     }
     Spacer(modifier = Modifier.height(16.dp))
-    Column(modifier = Modifier.fillMaxSize()) {
+    Column(
+      modifier = Modifier
+        .fillMaxSize()
+        .verticalScroll(scrollState)
+    ) {
       Image(
         painter = painterResource(id = user.image),
         contentDescription = "User Image",
@@ -173,6 +181,15 @@ fun BottomPanelUserContent(user: User) {
       )
       Spacer(modifier = Modifier.height(16.dp))
       ChipGroup()
+      Spacer(modifier = Modifier.height(16.dp))
+      ImagePicker(
+        Icons.Filled.DateRange,
+        Icons.Filled.ShoppingCart,
+        Icons.Filled.Call,
+        modifier = Modifier
+          .widthIn(150.dp, 200.dp)
+          .align(Alignment.CenterHorizontally)
+      )
     }
   }
 }
