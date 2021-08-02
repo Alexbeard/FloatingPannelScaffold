@@ -18,6 +18,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import cafe.adriel.voyager.navigator.Navigator
+import cafe.adriel.voyager.transitions.SlideTransition
 import com.example.floatingpannelscaffold.ui.floatingpanelscaffold.*
 import com.example.floatingpannelscaffold.ui.screens.BottomPanelScreens
 import com.example.floatingpannelscaffold.ui.screens.CityMapView
@@ -79,8 +80,8 @@ fun FloatingPanelScaffoldBody() {
           isInListMode.value = !isInListMode.value
         }
       )) { bottomPanelNavigator ->
-        Crossfade(targetState = bottomPanelNavigator.last) { screen ->
-          screen.Content()
+        SlideTransition(navigator = bottomPanelNavigator) {
+          it.Content()
         }
       }
     },
@@ -104,13 +105,15 @@ fun FloatingPanelScaffoldBody() {
     },
     sidePanelContent = {
       Navigator(sidePanelScreen) { sidePanelNavigator ->
-        sidePanelScreen = sidePanelNavigator.last as SidePanelScreens
-        Box(
-          modifier = sidePanelScreen
-            .modifier(isInListMode.value)
-            .animateContentSize()
-        ) {
-          sidePanelScreen.Content()
+        sidePanelScreen = sidePanelNavigator.lastItem as SidePanelScreens
+        SlideTransition(navigator = sidePanelNavigator) {
+          Box(
+            modifier = sidePanelScreen
+              .modifier(isInListMode.value)
+              .animateContentSize()
+          ) {
+            it.Content()
+          }
         }
       }
     },

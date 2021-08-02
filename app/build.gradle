@@ -63,6 +63,7 @@ dependencies {
     implementation "com.google.maps.android:maps-v3-ktx:2.2.0"
 
     //Voyager
-    implementation "cafe.adriel.voyager:voyager-navigator:1.0.0-beta01"
-    implementation "cafe.adriel.voyager:voyager-tab-navigator:1.0.0-beta01"
+    implementation "cafe.adriel.voyager:voyager-navigator:1.0.0-beta02"
+    implementation "cafe.adriel.voyager:voyager-tab-navigator:1.0.0-beta02"
+    implementation "cafe.adriel.voyager:voyager-transitions:1.0.0-beta02"
 }
