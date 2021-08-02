@@ -4,13 +4,18 @@ import androidx.compose.foundation.Image
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.*
+import androidx.compose.runtime.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -22,6 +27,7 @@ import androidx.compose.ui.unit.sp
 import cafe.adriel.voyager.core.screen.Screen
 import cafe.adriel.voyager.navigator.LocalNavigator
 import cafe.adriel.voyager.navigator.currentOrThrow
+import com.example.floatingpannelscaffold.ui.components.SelectableChip
 import com.example.floatingpannelscaffold.ui.models.DefaultUsers
 import com.example.floatingpannelscaffold.ui.models.User
 
@@ -164,6 +170,25 @@ fun BottomPanelUserContent(user: User) {
         color = MaterialTheme.colors.onSurface.copy(alpha = 0.5f),
         overflow = TextOverflow.Ellipsis,
         modifier = Modifier.align(Alignment.CenterHorizontally)
+      )
+      Spacer(modifier = Modifier.height(16.dp))
+      ChipGroup()
+    }
+  }
+}
+
+@Composable
+fun ChipGroup() {
+  var selectedChipIndex by rememberSaveable { mutableStateOf(-1) }
+  val chips = listOf("First", "Second", "Third", "Fourth")
+  LazyRow(modifier = Modifier.fillMaxWidth()) {
+    itemsIndexed(chips) { index, chip ->
+      Spacer(modifier = Modifier.width(16.dp))
+      SelectableChip(
+        label = chip,
+        contentDescription = chip,
+        selected = selectedChipIndex == index,
+        onClick = { selectedChipIndex = index }
       )
     }
   }
