@@ -6,18 +6,20 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.material.FloatingActionButton
 import androidx.compose.material.Icon
 import androidx.compose.material.MaterialTheme
-import androidx.compose.runtime.*
-import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
-import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
-import com.example.floatingpannelscaffold.ui.InitialZoom
 import com.example.floatingpannelscaffold.ui.rememberMapViewWithLifecycle
 import com.google.android.libraries.maps.CameraUpdateFactory
 import com.google.android.libraries.maps.MapView
 import com.google.android.libraries.maps.model.LatLng
+import com.google.android.libraries.maps.model.MapStyleOptions
 import com.google.maps.android.ktx.addMarker
 import com.google.maps.android.ktx.awaitMap
 import kotlinx.coroutines.launch
@@ -34,8 +36,9 @@ private fun MapViewContainer(
   latitude: String,
   longitude: String
 ) {
+  val context = LocalContext.current
+  val useDarkMap = !MaterialTheme.colors.isLight
   val coroutineScope = rememberCoroutineScope()
-
   val cameraPosition = remember(latitude, longitude) {
     LatLng(latitude.toDouble(), longitude.toDouble())
   }
@@ -46,7 +49,6 @@ private fun MapViewContainer(
     googleMap.moveCamera(CameraUpdateFactory.newLatLng(cameraPosition))
   }
 
-  var zoom by rememberSaveable(map) { mutableStateOf(InitialZoom) }
   Box {
     AndroidView({ map }) { mapView ->
       coroutineScope.launch {
@@ -54,7 +56,16 @@ private fun MapViewContainer(
         googleMap.uiSettings.isZoomGesturesEnabled = true
         googleMap.uiSettings.isTiltGesturesEnabled = true
         googleMap.uiSettings.isRotateGesturesEnabled = true
-        // Move camera to the same place to trigger the zoom update
+        if (useDarkMap) {
+          runCatching {
+            googleMap.setMapStyle(
+              MapStyleOptions.loadRawResourceStyle(
+                context,
+                com.example.floatingpannelscaffold.R.raw.map_dark_style
+              )
+            )
+          }
+        }
         googleMap.moveCamera(CameraUpdateFactory.newLatLng(cameraPosition))
       }
     }

@@ -3,7 +3,6 @@ package com.example.floatingpannelscaffold
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
-import androidx.compose.animation.Crossfade
 import androidx.compose.animation.ExperimentalAnimationApi
 import androidx.compose.animation.animateContentSize
 import androidx.compose.foundation.layout.Box
@@ -12,11 +11,14 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.ExperimentalMaterialApi
+import androidx.compose.material.MaterialTheme
 import androidx.compose.runtime.*
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.dp
+import androidx.core.view.WindowCompat
 import cafe.adriel.voyager.navigator.Navigator
 import cafe.adriel.voyager.transitions.SlideTransition
 import com.example.floatingpannelscaffold.ui.floatingpanelscaffold.*
@@ -25,6 +27,10 @@ import com.example.floatingpannelscaffold.ui.screens.CityMapView
 import com.example.floatingpannelscaffold.ui.screens.SidePanelScreens
 import com.example.floatingpannelscaffold.ui.screens.modifier
 import com.example.floatingpannelscaffold.ui.theme.FloatingPannelScaffoldTheme
+import com.google.accompanist.insets.LocalWindowInsets
+import com.google.accompanist.insets.ProvideWindowInsets
+import com.google.accompanist.insets.statusBarsPadding
+import com.google.accompanist.systemuicontroller.rememberSystemUiController
 import kotlinx.coroutines.launch
 
 class MainActivity : ComponentActivity() {
@@ -32,19 +38,42 @@ class MainActivity : ComponentActivity() {
   @ExperimentalMaterialApi
   override fun onCreate(savedInstanceState: Bundle?) {
     super.onCreate(savedInstanceState)
+    WindowCompat.setDecorFitsSystemWindows(window, false)
     setContent {
       FloatingPannelScaffoldTheme {
-        FloatingPanelScaffoldBody()
+        ProvideWindowInsets {
+          MainBody()
+        }
       }
     }
   }
+
+
 }
 
 @ExperimentalAnimationApi
 @ExperimentalMaterialApi
 @Composable
-@Preview
+fun MainBody() {
+  val systemUiController = rememberSystemUiController()
+  val useDarkIcons = MaterialTheme.colors.isLight
+  SideEffect {
+    systemUiController.setSystemBarsColor(
+      color = Color.Transparent,
+      darkIcons = useDarkIcons
+    )
+  }
+  FloatingPanelScaffoldBody()
+}
+
+
+@ExperimentalAnimationApi
+@ExperimentalMaterialApi
+@Composable
 fun FloatingPanelScaffoldBody() {
+  val insets = LocalWindowInsets.current
+  val statusBarsTop = with(LocalDensity.current) { insets.statusBars.top.toDp() }
+
   val coroutineScope = rememberCoroutineScope()
   val scaffoldState = rememberFloatingPanelScaffoldState()
   val isInListMode = rememberSaveable { mutableStateOf(false) }
@@ -90,16 +119,17 @@ fun FloatingPanelScaffoldBody() {
         comparator = Dimensions.Width lessThan 700.dp,
         modifier = Modifier
           .fillMaxWidth()
-          .padding(top = 16.dp)
+          .statusBarsPadding()
       )
       .mediaQuery(
         comparator = Dimensions.Width greaterThan 700.dp,
         modifier = Modifier
           .fillMaxWidth(0.4f)
-          .padding(16.dp)
+          .statusBarsPadding()
+          .padding(bottom = 8.dp, start = 8.dp)
       ) then if (isInListMode.value) Modifier.padding(end = 2.dp) else Modifier,
     bottomPanelShape = RoundedCornerShape(20.dp),
-    bottomPanelPeekHeight = 80.dp,
+    bottomPanelPeekHeight = 80.dp + statusBarsTop,
     content = {
       CityMapView(latitude = "43.000000", longitude = "-75.000000")
     },
@@ -117,7 +147,7 @@ fun FloatingPanelScaffoldBody() {
         }
       }
     },
-    sidePanelModifier = if (isInListMode.value) Modifier.padding(top = 16.dp) else Modifier,
+    sidePanelModifier = if (isInListMode.value) Modifier.statusBarsPadding() else Modifier,
   )
 }
 
