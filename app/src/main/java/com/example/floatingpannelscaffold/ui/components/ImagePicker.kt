@@ -1,7 +1,9 @@
 package com.example.floatingpannelscaffold.ui.components
 
 import androidx.compose.animation.animateColorAsState
-import androidx.compose.animation.core.animateDpAsState
+import androidx.compose.animation.core.animateDp
+import androidx.compose.animation.core.spring
+import androidx.compose.animation.core.updateTransition
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.border
@@ -16,18 +18,19 @@ import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.DateRange
 import androidx.compose.material.icons.filled.ShoppingCart
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
-import androidx.compose.runtime.*
-import androidx.compose.ui.Alignment
-import androidx.compose.ui.graphics.ColorFilter
 
 @Composable
 fun ImagePicker(
@@ -48,13 +51,41 @@ fun ImagePicker(
       .border(1.dp, borderColor, RoundedCornerShape(20.dp))
   ) {
     BoxWithConstraints(modifier = Modifier.fillMaxWidth()) {
-      val offset: Dp by animateDpAsState((this.maxWidth / icons.size) * index)
+      val iconWidth = (this.maxWidth / icons.size)
+      val tabPositions = List(icons.size) { index -> TabPosition((iconWidth * index), iconWidth) }
+      val transition = updateTransition(index, label = "")
+      val indicatorStart by transition.animateDp(
+        transitionSpec = {
+          if (initialState < targetState) {
+            spring(dampingRatio = 1f, stiffness = 50f)
+          } else {
+            spring(dampingRatio = 1f, stiffness = 1000f)
+          }
+        },
+        label = ""
+      ) {
+        tabPositions[it].left
+      }
+
+      val indicatorEnd by transition.animateDp(
+        transitionSpec = {
+          if (initialState < targetState) {
+            spring(dampingRatio = 1f, stiffness = 1000f)
+          } else {
+            spring(dampingRatio = 1f, stiffness = 50f)
+          }
+        },
+        label = ""
+      ) {
+        tabPositions[it].right
+      }
+
       Canvas(
         modifier = Modifier
-          .absoluteOffset(x = offset)
+          .offset(x = indicatorStart)
           .clip(RoundedCornerShape(20.dp))
           .height(imageSize)
-          .fillMaxWidth(1f / icons.size)
+          .width(indicatorEnd - indicatorStart)
       ) {
         drawRect(pickedColor)
       }
@@ -120,4 +151,8 @@ fun ImagePickerPreview3() {
     modifier = Modifier
       .padding(100.dp)
   )
+}
+
+data class TabPosition(val left: Dp, val width: Dp) {
+  val right: Dp get() = left + width
 }
