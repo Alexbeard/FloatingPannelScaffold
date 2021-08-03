@@ -33,6 +33,7 @@ import com.example.floatingpannelscaffold.ui.components.ImagePicker
 import com.example.floatingpannelscaffold.ui.components.SelectableChip
 import com.example.floatingpannelscaffold.ui.models.DefaultUsers
 import com.example.floatingpannelscaffold.ui.models.User
+import com.google.accompanist.insets.navigationBarsPadding
 
 sealed class BottomPanelScreens : Screen {
   class BottomPanelMainScreen(
@@ -87,9 +88,12 @@ fun BottomPanelMainContent(
     }
     Spacer(modifier = Modifier.height(16.dp))
     LazyColumn(modifier = Modifier.fillMaxSize()) {
-      items(DefaultUsers) { user ->
+      itemsIndexed(DefaultUsers) { index , user ->
         UserCell(user) {
           navigator.push(BottomPanelScreens.BottomPanelUserScreen(it))
+        }
+        if (index == DefaultUsers.lastIndex){
+          Spacer(modifier = Modifier.navigationBarsPadding())
         }
       }
     }

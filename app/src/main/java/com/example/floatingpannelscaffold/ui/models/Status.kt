@@ -42,4 +42,50 @@ val DefaultStatuses = listOf(
     backgroundColor = Color(0xFFe53935),
     statusText = "Delete"
   ),
+  Status(
+    icon = Icons.Filled.Build,
+    backgroundColor = Color(0xFF9575cd),
+    statusText = "Build"
+  ),
+  Status(
+    icon = Icons.Filled.AccountBox,
+    backgroundColor = Color(0xFF4dd0e1),
+    statusText = "AccountBox"
+  ),
+  Status(
+    icon = Icons.Filled.Create,
+    backgroundColor = Color(0xFFff5722),
+    statusText = "Create"
+  ),
+  Status(
+    icon = Icons.Filled.DateRange,
+    backgroundColor = Color(0xFF455a64),
+    statusText = "DateRange"
+  ),
+  Status(
+    icon = Icons.Filled.Favorite,
+    backgroundColor = Color(0xFF004d40),
+    statusText = "Favorite"
+  ),
+
+  Status(
+    icon = Icons.Filled.Home,
+    backgroundColor = Color(0xFF4660e1),
+    statusText = "Home"
+  ),
+  Status(
+    icon = Icons.Filled.Done,
+    backgroundColor = Color(0xFF655712),
+    statusText = "Done"
+  ),
+  Status(
+    icon = Icons.Filled.List,
+    backgroundColor = Color(0xFF455f10),
+    statusText = "List"
+  ),
+  Status(
+    icon = Icons.Filled.ThumbUp,
+    backgroundColor = Color(0xFF097d40),
+    statusText = "ThumbUp"
+  ),
 )

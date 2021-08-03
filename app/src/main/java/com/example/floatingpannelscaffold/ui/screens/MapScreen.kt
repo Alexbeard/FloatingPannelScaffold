@@ -1,87 +1,126 @@
 package com.example.floatingpannelscaffold.ui.screens
 
+import androidx.compose.animation.ExperimentalAnimationApi
+import androidx.compose.animation.animateContentSize
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
-import androidx.compose.material.FloatingActionButton
-import androidx.compose.material.Icon
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.ExperimentalMaterialApi
 import androidx.compose.material.MaterialTheme
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.*
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.vector.ImageVector
-import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.viewinterop.AndroidView
-import com.example.floatingpannelscaffold.ui.rememberMapViewWithLifecycle
-import com.google.android.libraries.maps.CameraUpdateFactory
-import com.google.android.libraries.maps.MapView
-import com.google.android.libraries.maps.model.LatLng
-import com.google.android.libraries.maps.model.MapStyleOptions
-import com.google.maps.android.ktx.addMarker
-import com.google.maps.android.ktx.awaitMap
+import cafe.adriel.voyager.navigator.Navigator
+import cafe.adriel.voyager.transitions.SlideTransition
+import com.example.floatingpannelscaffold.ui.floatingpanelscaffold.*
+import com.google.accompanist.insets.LocalWindowInsets
+import com.google.accompanist.insets.navigationBarsPadding
+import com.google.accompanist.insets.statusBarsPadding
+import com.google.accompanist.systemuicontroller.rememberSystemUiController
 import kotlinx.coroutines.launch
 
+
+@ExperimentalAnimationApi
+@ExperimentalMaterialApi
 @Composable
-fun CityMapView(latitude: String, longitude: String) {
-  val mapView = rememberMapViewWithLifecycle()
-  MapViewContainer(mapView, latitude, longitude)
+fun MapBody() {
+  FloatingPanelScaffoldBody()
 }
 
+
+@ExperimentalAnimationApi
+@ExperimentalMaterialApi
 @Composable
-private fun MapViewContainer(
-  map: MapView,
-  latitude: String,
-  longitude: String
-) {
-  val context = LocalContext.current
-  val useDarkMap = !MaterialTheme.colors.isLight
+fun FloatingPanelScaffoldBody() {
+  val insets = LocalWindowInsets.current
+  val statusBarsTop = with(LocalDensity.current) { insets.statusBars.top.toDp() }
+  val navigationBarTop = with(LocalDensity.current) { insets.navigationBars.bottom.toDp() }
+
   val coroutineScope = rememberCoroutineScope()
-  val cameraPosition = remember(latitude, longitude) {
-    LatLng(latitude.toDouble(), longitude.toDouble())
+  val scaffoldState = rememberFloatingPanelScaffoldState()
+  val isInListMode = rememberSaveable { mutableStateOf(false) }
+  var sidePanelState by rememberSaveable { mutableStateOf(SidePanelValue.Closed) }
+  var sidePanelScreen: SidePanelScreens by rememberSaveable { mutableStateOf(SidePanelScreens.SidePanelEmptyScreen) }
+
+  if (isInListMode.value) {
+    sidePanelState = SidePanelValue.Open
+  } else if (sidePanelScreen is SidePanelScreens.SidePanelEmptyScreen) {
+    sidePanelState = SidePanelValue.Closed
   }
 
-  LaunchedEffect(map) {
-    val googleMap = map.awaitMap()
-    googleMap.addMarker { position(cameraPosition) }
-    googleMap.moveCamera(CameraUpdateFactory.newLatLng(cameraPosition))
-  }
-
-  Box {
-    AndroidView({ map }) { mapView ->
-      coroutineScope.launch {
-        val googleMap = mapView.awaitMap()
-        googleMap.uiSettings.isZoomGesturesEnabled = true
-        googleMap.uiSettings.isTiltGesturesEnabled = true
-        googleMap.uiSettings.isRotateGesturesEnabled = true
-        if (useDarkMap) {
-          runCatching {
-            googleMap.setMapStyle(
-              MapStyleOptions.loadRawResourceStyle(
-                context,
-                com.example.floatingpannelscaffold.R.raw.map_dark_style
-              )
-            )
+  FloatingPanelScaffold(
+    scaffoldState = scaffoldState,
+    sidePanelState = sidePanelState,
+    isInListMode = isInListMode,
+    modifier = Modifier.fillMaxSize(),
+    bottomPanelContent = {
+      Navigator(BottomPanelScreens.BottomPanelMainScreen(
+        onExpandBottomClicked = {
+          coroutineScope.launch {
+            if (scaffoldState.bottomPanelState.isCollapsed) {
+              scaffoldState.bottomPanelState.expand()
+            } else {
+              scaffoldState.bottomPanelState.hide()
+            }
+          }
+        },
+        onExpandSideClicked = {
+          sidePanelState = !sidePanelState
+        },
+        onListModeClicked = {
+          isInListMode.value = !isInListMode.value
+        }
+      )) { bottomPanelNavigator ->
+        SlideTransition(navigator = bottomPanelNavigator) {
+          it.Content()
+        }
+      }
+    },
+    bottomPanelModifier = Modifier
+      .statusBarsPadding()
+      .navigationBarsPadding(bottom = false)
+      .mediaQuery(
+        comparator = Dimensions.Width lessThan 700.dp,
+        modifier = Modifier
+          .fillMaxWidth()
+      )
+      .mediaQuery(
+        comparator = Dimensions.Width greaterThan 700.dp,
+        modifier = Modifier
+          .fillMaxWidth(0.4f)
+          .padding(bottom = 8.dp, start = 8.dp)
+      ) then if (isInListMode.value) Modifier.padding(end = 2.dp) else Modifier,
+    bottomPanelShape = RoundedCornerShape(20.dp),
+    bottomPanelPeekHeight = 80.dp + statusBarsTop + navigationBarTop,
+    content = {
+      CityMapView(latitude = "43.000000", longitude = "-75.000000")
+    },
+    sidePanelContent = {
+      Navigator(sidePanelScreen) { sidePanelNavigator ->
+        sidePanelScreen = sidePanelNavigator.lastItem as SidePanelScreens
+        SlideTransition(navigator = sidePanelNavigator) {
+          Box(
+            modifier = sidePanelScreen
+              .modifier(isInListMode.value)
+              .animateContentSize()
+          ) {
+            it.Content()
           }
         }
-        googleMap.moveCamera(CameraUpdateFactory.newLatLng(cameraPosition))
       }
-    }
-  }
-}
-
-@Composable
-private fun MapControlButton(imageVector: ImageVector, onClick: () -> Unit) {
-  FloatingActionButton(
-    modifier = Modifier
-      .size(56.dp)
-      .padding(8.dp),
-    backgroundColor = MaterialTheme.colors.onPrimary,
-    contentColor = MaterialTheme.colors.primary,
-    onClick = onClick
-  ) {
-    Icon(imageVector = imageVector, contentDescription = "")
-  }
+    },
+    sidePanelModifier = Modifier
+      .statusBarsPadding()
+      .navigationBarsPadding(bottom = false)
+      .mediaQuery(
+        comparator = Dimensions.Width greaterThan 700.dp,
+        modifier = Modifier
+          .padding(bottom = 8.dp)
+      )
+  )
 }
