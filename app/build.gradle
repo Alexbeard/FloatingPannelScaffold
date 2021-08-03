@@ -66,4 +66,8 @@ dependencies {
     implementation "cafe.adriel.voyager:voyager-navigator:1.0.0-beta02"
     implementation "cafe.adriel.voyager:voyager-tab-navigator:1.0.0-beta02"
     implementation "cafe.adriel.voyager:voyager-transitions:1.0.0-beta02"
+
+    //Insets
+    implementation "com.google.accompanist:accompanist-insets:0.15.0"
+    implementation "com.google.accompanist:accompanist-systemuicontroller:0.15.0"
 }

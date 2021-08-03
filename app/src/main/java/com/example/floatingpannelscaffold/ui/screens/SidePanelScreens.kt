@@ -6,6 +6,7 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.MaterialTheme
 import androidx.compose.material.Text
@@ -19,6 +20,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
@@ -28,6 +30,8 @@ import cafe.adriel.voyager.navigator.LocalNavigator
 import cafe.adriel.voyager.navigator.currentOrThrow
 import com.example.floatingpannelscaffold.ui.models.DefaultStatuses
 import com.example.floatingpannelscaffold.ui.models.Status
+import com.google.accompanist.insets.LocalWindowInsets
+import com.google.accompanist.insets.navigationBarsPadding
 
 
 sealed class SidePanelScreens : Screen {
@@ -64,15 +68,22 @@ sealed class SidePanelScreens : Screen {
 
 @Composable
 fun SidePanelList(items: List<Status>, onClick: (ImageVector) -> Unit) {
+  val navigationBarTop = with(LocalDensity.current) {
+    LocalWindowInsets.current.navigationBars.bottom.toDp()
+  }
+
   LazyColumn {
-    items(items) {
+    itemsIndexed(items) { index, item ->
       Spacer(modifier = Modifier.height(16.dp))
       StatusAction(
-        icon = it.icon,
-        backgroundColor = it.backgroundColor,
-        status = it.statusText,
+        icon = item.icon,
+        backgroundColor = item.backgroundColor,
+        status = item.statusText,
         onClick = onClick
       )
+      if (index == items.lastIndex) {
+        Spacer(modifier = Modifier.height(navigationBarTop))
+      }
     }
   }
 }
