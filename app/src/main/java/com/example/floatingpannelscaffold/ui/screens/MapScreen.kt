@@ -8,20 +8,21 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.ExperimentalMaterialApi
-import androidx.compose.material.MaterialTheme
 import androidx.compose.runtime.*
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.dp
 import cafe.adriel.voyager.navigator.Navigator
 import cafe.adriel.voyager.transitions.SlideTransition
 import com.example.floatingpannelscaffold.ui.floatingpanelscaffold.*
+import com.example.floatingpannelscaffold.ui.screens.bottompanel.BottomPanelScreens
+import com.example.floatingpannelscaffold.ui.screens.mapview.CityMapView
+import com.example.floatingpannelscaffold.ui.screens.sidepanel.SidePanelScreens
+import com.example.floatingpannelscaffold.ui.screens.sidepanel.modifier
 import com.google.accompanist.insets.LocalWindowInsets
 import com.google.accompanist.insets.navigationBarsPadding
 import com.google.accompanist.insets.statusBarsPadding
-import com.google.accompanist.systemuicontroller.rememberSystemUiController
 import kotlinx.coroutines.launch
 
 
@@ -59,7 +60,8 @@ fun FloatingPanelScaffoldBody() {
     isInListMode = isInListMode,
     modifier = Modifier.fillMaxSize(),
     bottomPanelContent = {
-      Navigator(BottomPanelScreens.BottomPanelMainScreen(
+      Navigator(
+        BottomPanelScreens.BottomPanelMainScreen(
         onExpandBottomClicked = {
           coroutineScope.launch {
             if (scaffoldState.bottomPanelState.isCollapsed) {
