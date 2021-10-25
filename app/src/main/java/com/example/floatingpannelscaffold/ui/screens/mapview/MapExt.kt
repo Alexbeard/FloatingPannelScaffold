@@ -1,4 +1,4 @@
-package com.example.floatingpannelscaffold.ui
+package com.example.floatingpannelscaffold.ui.screens.mapview
 
 import android.os.Bundle
 import androidx.annotation.FloatRange
@@ -9,7 +9,6 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalLifecycleOwner
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
-import androidx.lifecycle.Transformations.map
 import com.example.floatingpannelscaffold.R
 import com.google.android.libraries.maps.GoogleMap
 import com.google.android.libraries.maps.MapView

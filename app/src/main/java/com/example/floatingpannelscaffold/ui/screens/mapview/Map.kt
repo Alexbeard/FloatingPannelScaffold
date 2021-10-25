@@ -1,21 +1,13 @@
-package com.example.floatingpannelscaffold.ui.screens
+package com.example.floatingpannelscaffold.ui.screens.mapview
 
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
-import androidx.compose.material.FloatingActionButton
-import androidx.compose.material.Icon
 import androidx.compose.material.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
-import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
-import com.example.floatingpannelscaffold.ui.rememberMapViewWithLifecycle
 import com.google.android.libraries.maps.CameraUpdateFactory
 import com.google.android.libraries.maps.MapView
 import com.google.android.libraries.maps.model.LatLng
@@ -69,19 +61,5 @@ private fun MapViewContainer(
         googleMap.moveCamera(CameraUpdateFactory.newLatLng(cameraPosition))
       }
     }
-  }
-}
-
-@Composable
-private fun MapControlButton(imageVector: ImageVector, onClick: () -> Unit) {
-  FloatingActionButton(
-    modifier = Modifier
-      .size(56.dp)
-      .padding(8.dp),
-    backgroundColor = MaterialTheme.colors.onPrimary,
-    contentColor = MaterialTheme.colors.primary,
-    onClick = onClick
-  ) {
-    Icon(imageVector = imageVector, contentDescription = "")
   }
 }
