@@ -5,21 +5,22 @@ import androidx.compose.animation.core.AnimationSpec
 import androidx.compose.foundation.gestures.Orientation
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.ExperimentalMaterialApi
-import androidx.compose.material.MaterialTheme
-import androidx.compose.material.Surface
-import androidx.compose.material.contentColorFor
+import androidx.compose.material.*
 import androidx.compose.runtime.*
 import androidx.compose.runtime.saveable.Saver
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Shape
+import androidx.compose.ui.input.nestedscroll.NestedScrollConnection
+import androidx.compose.ui.input.nestedscroll.NestedScrollSource
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.layout.Layout
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.unit.Velocity
 import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.launch
 import kotlin.math.max
@@ -55,7 +56,7 @@ class BottomPanelState(
     get() = currentValue == BottomPanelValue.Collapsed
 
   val isHalfExpandedEnabled: Boolean
-    get() = anchors.values.contains(BottomPanelValue.HalfExpanded)
+    get() = currentValue == BottomPanelValue.HalfExpanded
 
   suspend fun show() {
     val targetValue =
@@ -75,7 +76,51 @@ class BottomPanelState(
 
   suspend fun hide() = animateTo(BottomPanelValue.Collapsed)
 
-  internal val nestedScrollConnection = this.PreUpPostDownNestedScrollConnection
+  val nestedScrollConnection = PreUpPostDownNestedScrollConnection
+
+  val <T> SwipeableState<T>.PreUpPostDownNestedScrollConnection: NestedScrollConnection
+    get() = object : NestedScrollConnection {
+      override fun onPreScroll(available: Offset, source: NestedScrollSource): Offset {
+        val delta = available.toFloat()
+        return if (delta < 0 && source == NestedScrollSource.Drag) {
+          performDrag(delta).toOffset()
+        } else {
+          Offset.Zero
+        }
+      }
+
+      override fun onPostScroll(
+        consumed: Offset,
+        available: Offset,
+        source: NestedScrollSource
+      ): Offset {
+        return if (source == NestedScrollSource.Drag) {
+          performDrag(available.toFloat()).toOffset()
+        } else {
+          Offset.Zero
+        }
+      }
+
+      override suspend fun onPreFling(available: Velocity): Velocity {
+        val toFling = Offset(available.x, available.y).toFloat()
+        return if (toFling < 0 && offset.value > 0f) {
+          performFling(velocity = toFling)
+          // since we go to the anchor with tween settling, consume all for the best UX
+          available
+        } else {
+          Velocity.Zero
+        }
+      }
+
+      override suspend fun onPostFling(consumed: Velocity, available: Velocity): Velocity {
+        performFling(velocity = Offset(available.x, available.y).toFloat())
+        return available
+      }
+
+      private fun Float.toOffset(): Offset = Offset(0f, this)
+
+      private fun Offset.toFloat(): Float = this.y
+    }
 
   companion object {
     fun Saver(
